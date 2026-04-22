@@ -1,8 +1,7 @@
 import type { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
 import { errorResponse, successResponse } from "../../utils/apiResponse";
-import { registerService } from "./auth.service";
-import ApiError from "../../utils/apiError";
+import { loginService, registerService } from "./auth.service";
 
 export const registerController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -18,21 +17,44 @@ export const registerController = asyncHandler(
       }
     }
 
-    try {
-      const user = await registerService({
-        email,
-        password,
-        name,
-        role,
-        agencyId,
-      });
+    const user = await registerService({
+      email,
+      password,
+      name,
+      role,
+      agencyId,
+    });
 
-      return successResponse(res, 201, "User created successfully", user);
-    } catch (error: any) {
-      if (error instanceof ApiError) {
-        return errorResponse(res, error.message, error.statusCode);
-      }
-      return errorResponse(res, error.message);
+    return successResponse(res, 201, "User created successfully", user);
+  },
+);
+
+export const loginController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+
+    if (!email?.trim() || !password?.trim()) {
+      return errorResponse(res, "All fields are required", 400);
     }
+
+    const result = await loginService({ email, password });
+
+    if (req.headers["x-client"] === "mobile") {
+      return successResponse(res, 200, "Login successful", {
+        token: result.token,
+        user: result.user,
+      });
+    }
+
+    res.cookie("accessToken", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return successResponse(res, 200, "Login successful", {
+      user: result.user,
+    });
   },
 );

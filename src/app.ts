@@ -2,8 +2,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import authRouter from "./modules/auth/auth.route";
 import { errorResponse } from "./utils/apiResponse";
+import ApiError from "./utils/apiError";
 
 const app = express();
 
@@ -12,6 +14,7 @@ app.use(helmet());
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
@@ -27,6 +30,9 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err: any, req: any, res: any, next: any) => {
+  if (err instanceof ApiError) {
+    return errorResponse(res, err.message, err.statusCode);
+  }
   console.error(err.stack);
   return errorResponse(res, "Internal server error", 500);
 });

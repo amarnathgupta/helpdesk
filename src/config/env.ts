@@ -7,6 +7,7 @@ const env = {
     process.env.NODE_ENV === "migration"
       ? process.env.DIRECT_DATABASE_URL
       : process.env.DATABASE_URL,
+  JWT_SECRET: process.env.JWT_SECRET || "secret",
 };
 
 export default env;

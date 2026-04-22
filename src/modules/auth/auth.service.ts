@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import { Role } from "../../../generated/prisma/enums";
 import { prisma } from "../../config/prisma";
 import ApiError from "../../utils/apiError";
+import env from "../../config/env";
+import jwt from "jsonwebtoken";
 
 type RegisterInput = {
   email: string;
@@ -9,6 +11,11 @@ type RegisterInput = {
   name: string;
   role: Role;
   agencyId?: string;
+};
+
+type LoginInput = {
+  email: string;
+  password: string;
 };
 
 export const registerService = async ({
@@ -61,4 +68,41 @@ export const registerService = async ({
   });
 
   return newUser;
+};
+
+export const loginService = async ({ email, password }: LoginInput) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError("User not found", 404);
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+
+  if (!isPasswordValid) {
+    throw new ApiError("Invalid credentials", 401);
+  }
+
+  const payload = {
+    userId: user.id,
+    role: user.role,
+    agencyId: user.agencyId,
+  };
+
+  const token = jwt.sign(payload, env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      agencyId: user.agencyId,
+    },
+  };
 };
