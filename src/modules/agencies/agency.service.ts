@@ -2,6 +2,7 @@ import slugify from "slugify";
 import { prisma } from "../../config/prisma";
 import generateSlug from "../../utils/slug.util";
 import ApiError from "../../utils/apiError";
+import { encrypt } from "../../utils/crypto.util";
 
 export const createAgencyService = async (name: string, slug?: string) => {
   const cleanName = name.trim();
@@ -95,4 +96,47 @@ export const updateAgencyService = async (
   } catch (error) {
     throw new ApiError("Agency not found", 404);
   }
+};
+
+export const setEmailConfigService = async (agencyId: string, payload: any) => {
+  const {
+    inboundEmail,
+    smtpHost,
+    smtpPort,
+    smtpUser,
+    smtpPass,
+    smtpFromName,
+    smtpFromEmail,
+  } = payload;
+
+  if (!inboundEmail || !smtpHost || !smtpUser || !smtpPass || !smtpFromEmail) {
+    throw { message: "Missing required fields", statusCode: 400 };
+  }
+
+  const encryptedPass = encrypt(smtpPass);
+
+  const config = await prisma.emailConfig.upsert({
+    where: { agencyId },
+    update: {
+      inboundEmail,
+      smtpHost,
+      smtpPort,
+      smtpUser,
+      smtpPass: encryptedPass,
+      smtpFromName,
+      smtpFromEmail,
+    },
+    create: {
+      agencyId,
+      inboundEmail,
+      smtpHost,
+      smtpPort,
+      smtpUser,
+      smtpPass: encryptedPass,
+      smtpFromName,
+      smtpFromEmail,
+    },
+  });
+
+  return config;
 };

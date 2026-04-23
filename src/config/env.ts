@@ -8,6 +8,7 @@ const env = {
       ? process.env.DIRECT_DATABASE_URL
       : process.env.DATABASE_URL,
   JWT_SECRET: process.env.JWT_SECRET || "secret",
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || "secret",
 };
 
 export default env;

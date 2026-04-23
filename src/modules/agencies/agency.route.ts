@@ -3,6 +3,7 @@ import {
   createAgencyController,
   getAgenciesController,
   getAgencyController,
+  setEmailConfigController,
   updateAgencyController,
 } from "./agency.controller";
 import { allowRoles } from "../../middlewares/role.middleware";
@@ -16,6 +17,11 @@ agencyRouter.use(authMiddleware);
 
 agencyRouter.post("/", allowRoles(Role.ADMIN), createAgencyController);
 agencyRouter.put("/:id", allowRoles(Role.ADMIN), updateAgencyController);
+agencyRouter.post(
+  "/:id/email-config",
+  allowRoles(Role.ADMIN),
+  setEmailConfigController,
+);
 
 agencyRouter.use(
   tenantMiddleware,
