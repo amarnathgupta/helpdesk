@@ -1,4 +1,4 @@
-import { TicketPriority } from "../../../generated/prisma/enums";
+import { Role, TicketPriority } from "../../../generated/prisma/enums";
 import { prisma } from "../../config/prisma";
 
 export const createTicketService = async (data: {
@@ -19,4 +19,40 @@ export const createTicketService = async (data: {
   });
 
   return ticket;
+};
+
+export const getTicketsService = async ({
+  role,
+  tenantId,
+  userId,
+  cursor,
+  limit,
+}: any) => {
+  let where: any = {};
+
+  if (role === "AGENCY_AGENT") {
+    where.agencyId = tenantId;
+  }
+
+  if (role === "CLIENT") {
+    where = {
+      creatorId: userId,
+    };
+  }
+
+  const tickets = await prisma.ticket.findMany({
+    where,
+    take: limit,
+    skip: cursor ? 1 : 0,
+    cursor: cursor ? { id: cursor } : undefined,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
+
+  const nextCursor =
+    tickets.length === limit ? tickets[tickets.length - 1].id : null;
+
+  return {
+    data: tickets,
+    nextCursor,
+  };
 };

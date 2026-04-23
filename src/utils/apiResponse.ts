@@ -1,10 +1,11 @@
 import type { Response } from "express";
 
 type Meta = {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+  nextCursor?: string | null;
 };
 export const successResponse = <T>(
   res: Response,

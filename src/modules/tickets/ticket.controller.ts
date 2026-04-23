@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { errorResponse, successResponse } from "../../utils/apiResponse";
 import asyncHandler from "../../utils/asyncHandler";
-import { createTicketService } from "./ticket.service";
+import { createTicketService, getTicketsService } from "./ticket.service";
 
 export const createTicketController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -27,5 +27,24 @@ export const createTicketController = asyncHandler(
     });
 
     return successResponse(res, 201, "Ticket created successfully", ticket);
+  },
+);
+
+export const getTicketsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const cursor = req.query.cursor as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 20);
+
+    const result = await getTicketsService({
+      role: req.user.role,
+      tenantId: req.tenantId,
+      userId: req.user.userId,
+      cursor,
+      limit,
+    });
+
+    return successResponse(res, 200, "Tickets fetched successfully", result, {
+      nextCursor: result.nextCursor,
+    });
   },
 );
