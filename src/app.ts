@@ -7,6 +7,7 @@ import authRouter from "./modules/auth/auth.route";
 import { errorResponse } from "./utils/apiResponse";
 import ApiError from "./utils/apiError";
 import agencyRouter from "./modules/agencies/agency.route";
+import ticketRouter from "./modules/tickets/ticket.route";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get("/health", (req, res) => {
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/agencies", agencyRouter);
+app.use("/api/tickets", ticketRouter);
 
 // 404 handler
 app.use((req, res) => {
