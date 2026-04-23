@@ -1,8 +1,9 @@
 import type { Request, Response } from "express";
 import { errorResponse, successResponse } from "../../utils/apiResponse";
 import asyncHandler from "../../utils/asyncHandler";
-import { createAgencyService } from "./agency.service";
+import { createAgencyService, updateAgencyService } from "./agency.service";
 import { prisma } from "../../config/prisma";
+import slugify from "slugify";
 
 export const createAgencyController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -46,5 +47,40 @@ export const getAgenciesController = asyncHandler(
         totalPages: Math.ceil(total / limit),
       },
     );
+  },
+);
+
+export const getAgencyController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (req.tenantId && req.tenantId !== id) {
+      return errorResponse(res, "Forbidden", 403);
+    }
+
+    const agency = await prisma.agency.findUnique({
+      where: { id },
+    });
+
+    if (!agency) {
+      return errorResponse(res, "Agency not found", 404);
+    }
+
+    return successResponse(res, 200, "Agency fetched successfully", agency);
+  },
+);
+
+export const updateAgencyController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { name, slug, isActive } = req.body;
+
+    const agency = await updateAgencyService(id, {
+      name,
+      slug,
+      isActive,
+    });
+
+    return successResponse(res, 200, "Agency updated successfully", agency);
   },
 );

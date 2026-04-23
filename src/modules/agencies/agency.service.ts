@@ -39,3 +39,60 @@ export const createAgencyService = async (name: string, slug?: string) => {
     throw new ApiError("Slug already exists", 409);
   }
 };
+
+export const updateAgencyService = async (
+  id: string,
+  payload: {
+    name?: string;
+    slug?: string;
+    isActive?: boolean;
+  },
+) => {
+  const { name, slug, isActive } = payload;
+
+  const data: any = {};
+
+  if (name?.trim()) {
+    data.name = name.trim();
+  }
+
+  if (slug?.trim()) {
+    const normalized = slugify(slug, { lower: true, strict: true });
+
+    if (!normalized) {
+      throw new ApiError("Invalid slug", 400);
+    }
+
+    const existing = await prisma.agency.findFirst({
+      where: {
+        slug: normalized,
+        NOT: { id },
+      },
+    });
+
+    if (existing) {
+      throw new ApiError("Slug already exists", 409);
+    }
+
+    data.slug = normalized;
+  }
+
+  if (typeof isActive === "boolean") {
+    data.isActive = isActive;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw new ApiError("No data to update", 400);
+  }
+
+  try {
+    const agency = await prisma.agency.update({
+      where: { id },
+      data,
+    });
+
+    return agency;
+  } catch (error) {
+    throw new ApiError("Agency not found", 404);
+  }
+};
