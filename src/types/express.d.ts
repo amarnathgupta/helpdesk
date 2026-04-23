@@ -8,6 +8,7 @@ declare module "express" {
       role: Role;
       agencyId?: string;
     };
+    tenantId?: string | null;
   }
 }
 

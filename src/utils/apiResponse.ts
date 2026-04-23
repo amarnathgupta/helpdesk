@@ -4,6 +4,7 @@ type Meta = {
   total: number;
   page: number;
   limit: number;
+  totalPages: number;
 };
 export const successResponse = <T>(
   res: Response,
