@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { errorResponse, successResponse } from "../../utils/apiResponse";
 import asyncHandler from "../../utils/asyncHandler";
 import {
+  addMessageService,
   createTicketService,
   getTicketByIdService,
   getTicketsService,
@@ -96,7 +97,7 @@ export const updateTicketController = asyncHandler(
     const ticket = await updateTicketService({
       ticketId,
       role: req.user.role,
-      tenantId: req.tenantId,
+      tenantId: req.tenantId || null,
       status,
       priority,
       assignedTo,
@@ -107,5 +108,27 @@ export const updateTicketController = asyncHandler(
     }
 
     return successResponse(res, 200, "Ticket updated successfully", ticket);
+  },
+);
+
+export const addMessageController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ticketId = req.params.id;
+    const { body, type } = req.body;
+
+    if (!body?.trim()) {
+      return errorResponse(res, "Message body is required", 400);
+    }
+
+    const message = await addMessageService({
+      ticketId,
+      body,
+      type,
+      role: req.user.role,
+      userId: req.user.userId,
+      tenantId: req.tenantId || null,
+    });
+
+    return successResponse(res, 201, "Message added successfully", message);
   },
 );

@@ -1,4 +1,9 @@
-import { Role, TicketPriority } from "../../../generated/prisma/enums";
+import {
+  MessageType,
+  Role,
+  TicketPriority,
+  TicketStatus,
+} from "../../../generated/prisma/enums";
 import { prisma } from "../../config/prisma";
 import ApiError from "../../utils/apiError";
 
@@ -106,9 +111,9 @@ export const updateTicketService = async ({
 }: {
   ticketId: string;
   role: Role;
-  tenantId: string;
-  status?: string;
-  priority?: string;
+  tenantId: string | null;
+  status?: TicketStatus;
+  priority?: TicketPriority;
   assignedTo?: string;
 }) => {
   let where: any = {
@@ -141,4 +146,55 @@ export const updateTicketService = async ({
     }
     throw new ApiError("Failed to update ticket", 500);
   }
+};
+
+export const addMessageService = async ({
+  ticketId,
+  body,
+  type,
+  role,
+  userId,
+  tenantId,
+}: {
+  ticketId: string;
+  body: string;
+  type?: MessageType;
+  role: Role;
+  userId: string;
+  tenantId: string | null;
+}) => {
+  let where: any = { id: ticketId };
+
+  if (role === Role.AGENCY_AGENT) {
+    where.agencyId = tenantId;
+  }
+
+  if (role === Role.CLIENT) {
+    where.creatorId = userId;
+  }
+
+  const ticket = await prisma.ticket.findFirst({
+    where,
+  });
+
+  if (!ticket) {
+    throw new ApiError("Ticket not found or access denied", 404);
+  }
+
+  let messageType = type;
+
+  if (role === Role.CLIENT) {
+    messageType = "REPLY";
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      body: body.trim(),
+      type: messageType || MessageType.REPLY,
+      ticketId: ticket.id,
+      authorId: userId,
+    },
+  });
+
+  return message;
 };

@@ -12,15 +12,11 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─────────────────────────────────────────
-// ENUMS — Status/Role/Priority ke options
-// ─────────────────────────────────────────
-
 enum Role {
-  ADMIN           // Hamaari company — full access
-  INTERNAL_AGENT  // Hamare employees — sab agencies dekh sakte
-  AGENCY_AGENT    // Partner ka agent — sirf apni agency
-  CLIENT          // End user — sirf apne tickets
+  ADMIN           
+  INTERNAL_AGENT  
+  AGENCY_AGENT    
+  CLIENT          
 }
 
 enum TicketStatus {
@@ -37,41 +33,29 @@ enum TicketPriority {
 }
 
 enum MessageType {
-  REPLY           // Customer/agent ka public reply
-  INTERNAL_NOTE   // Sirf agents dekhenge — client ko nahi dikhega
+  REPLY           
+  INTERNAL_NOTE   
 }
-
-// ─────────────────────────────────────────
-// AGENCY — Multi-tenancy ki neenv yahi hai
-// ─────────────────────────────────────────
 
 model Agency {
   id          String   @id @default(cuid())
   name        String
-  slug        String   @unique  // URL-friendly name e.g. "acme-corp"
+  slug        String   @unique  
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   users       User[]
   tickets     Ticket[]
-  emailConfig EmailConfig?   // One agency = one email config
+  emailConfig EmailConfig?   
 
   @@map("agencies")
 }
-
-// ─────────────────────────────────────────
-// EMAIL CONFIG — Per-agency email settings
-// Inbound: kaunsa email address pe aayega
-// Outbound: kaunse SMTP se reply jayega
-// ─────────────────────────────────────────
 
 model EmailConfig {
   id              String   @id @default(cuid())
   agencyId        String   @unique
   
-  // Inbound — is address pe email aane se ticket banega
   inboundEmail    String   @unique  // e.g. support@acme.helpdesk.com
 
   // Outbound SMTP — is agency ke tickets ke replies
@@ -79,7 +63,7 @@ model EmailConfig {
   smtpHost        String
   smtpPort        Int      @default(587)
   smtpUser        String
-  smtpPass        String   // Baad mein encrypt karna
+  smtpPass        String   
   smtpFromName    String   // e.g. "Acme Support"
   smtpFromEmail   String   // e.g. "support@acme.com"
 
@@ -120,17 +104,13 @@ model User {
   @@map("users")
 }
 
-// ─────────────────────────────────────────
-// TICKET — Core entity
-// ─────────────────────────────────────────
-
 model Ticket {
   id           String         @id @default(cuid())
   subject      String
   status       TicketStatus   @default(OPEN)
   priority     TicketPriority @default(MEDIUM)
 
-  // Ye ticket kis agency ka hai — MANDATORY
+
   agencyId     String
   agency       Agency         @relation(fields: [agencyId], references: [id])
 

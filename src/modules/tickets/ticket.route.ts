@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  addMessageController,
   createTicketController,
   getTicketByIdController,
   getTicketsController,
@@ -22,16 +23,17 @@ ticketRouter.post(
 
 ticketRouter.get("/", getTicketsController);
 
-ticketRouter.get(
-  "/:id",
-  allowRoles(Role.CLIENT, Role.AGENCY_AGENT, Role.ADMIN, Role.INTERNAL_AGENT),
-  getTicketByIdController,
-);
-
 ticketRouter.put(
   "/:id",
   allowRoles(Role.ADMIN, Role.INTERNAL_AGENT, Role.AGENCY_AGENT),
   updateTicketController,
 );
+
+ticketRouter.use(
+  allowRoles(Role.CLIENT, Role.AGENCY_AGENT, Role.ADMIN, Role.INTERNAL_AGENT),
+);
+
+ticketRouter.get("/:id", getTicketByIdController);
+ticketRouter.post("/:id/messages", addMessageController);
 
 export default ticketRouter;
