@@ -52,7 +52,44 @@ export const getTicketsService = async ({
     tickets.length === limit ? tickets[tickets.length - 1].id : null;
 
   return {
-    data: tickets,
+    tickets,
     nextCursor,
   };
+};
+
+export const getTicketByIdService = async ({
+  ticketId,
+  role,
+  userId,
+  tenantId,
+}: {
+  ticketId: string;
+  role: Role;
+  userId: string;
+  tenantId: string;
+}) => {
+  let where: any = {
+    id: ticketId,
+  };
+
+  if (role === Role.AGENCY_AGENT) {
+    where.agencyId = tenantId;
+  }
+
+  if (role === Role.CLIENT) {
+    where.creatorId = userId;
+  }
+
+  const ticket = await prisma.ticket.findFirst({
+    where,
+    include: {
+      messages: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+  });
+
+  return ticket;
 };

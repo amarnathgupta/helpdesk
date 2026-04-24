@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import { errorResponse, successResponse } from "../../utils/apiResponse";
 import asyncHandler from "../../utils/asyncHandler";
-import { createTicketService, getTicketsService } from "./ticket.service";
+import {
+  createTicketService,
+  getTicketByIdService,
+  getTicketsService,
+} from "./ticket.service";
 
 export const createTicketController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -43,8 +47,37 @@ export const getTicketsController = asyncHandler(
       limit,
     });
 
-    return successResponse(res, 200, "Tickets fetched successfully", result, {
-      nextCursor: result.nextCursor,
+    return successResponse(
+      res,
+      200,
+      "Tickets fetched successfully",
+      { tickets: result["tickets"] },
+      {
+        nextCursor: result.nextCursor,
+      },
+    );
+  },
+);
+
+export const getTicketByIdController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ticketId = req.params.id;
+
+    if (!ticketId) {
+      return errorResponse(res, "Ticket ID is required", 400);
+    }
+
+    const ticket = await getTicketByIdService({
+      ticketId,
+      role: req.user.role,
+      userId: req.user.userId,
+      tenantId: req.tenantId,
     });
+
+    if (!ticket) {
+      return errorResponse(res, "Ticket not found or access denied", 404);
+    }
+
+    return successResponse(res, 200, "Ticket fetched successfully", ticket);
   },
 );
