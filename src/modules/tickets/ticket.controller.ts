@@ -5,6 +5,7 @@ import {
   createTicketService,
   getTicketByIdService,
   getTicketsService,
+  updateTicketService,
 } from "./ticket.service";
 
 export const createTicketController = asyncHandler(
@@ -79,5 +80,32 @@ export const getTicketByIdController = asyncHandler(
     }
 
     return successResponse(res, 200, "Ticket fetched successfully", ticket);
+  },
+);
+
+export const updateTicketController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const ticketId = req.params.id;
+
+    if (!ticketId) {
+      return errorResponse(res, "Ticket ID is required", 400);
+    }
+
+    const { status, priority, assignedTo } = req.body;
+
+    const ticket = await updateTicketService({
+      ticketId,
+      role: req.user.role,
+      tenantId: req.tenantId,
+      status,
+      priority,
+      assignedTo,
+    });
+
+    if (!ticket) {
+      return errorResponse(res, "Ticket not found or access denied", 404);
+    }
+
+    return successResponse(res, 200, "Ticket updated successfully", ticket);
   },
 );

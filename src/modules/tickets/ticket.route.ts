@@ -3,6 +3,7 @@ import {
   createTicketController,
   getTicketByIdController,
   getTicketsController,
+  updateTicketController,
 } from "./ticket.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import { tenantMiddleware } from "../../middlewares/tenant.middleware";
@@ -25,6 +26,12 @@ ticketRouter.get(
   "/:id",
   allowRoles(Role.CLIENT, Role.AGENCY_AGENT, Role.ADMIN, Role.INTERNAL_AGENT),
   getTicketByIdController,
+);
+
+ticketRouter.put(
+  "/:id",
+  allowRoles(Role.ADMIN, Role.INTERNAL_AGENT, Role.AGENCY_AGENT),
+  updateTicketController,
 );
 
 export default ticketRouter;

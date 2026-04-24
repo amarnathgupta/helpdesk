@@ -1,5 +1,6 @@
 import { Role, TicketPriority } from "../../../generated/prisma/enums";
 import { prisma } from "../../config/prisma";
+import ApiError from "../../utils/apiError";
 
 export const createTicketService = async (data: {
   subject: string;
@@ -84,6 +85,7 @@ export const getTicketByIdService = async ({
     where,
     include: {
       messages: {
+        where: role === Role.CLIENT ? { type: "REPLY" } : undefined,
         orderBy: {
           createdAt: "asc",
         },
@@ -92,4 +94,51 @@ export const getTicketByIdService = async ({
   });
 
   return ticket;
+};
+
+export const updateTicketService = async ({
+  ticketId,
+  role,
+  tenantId,
+  status,
+  priority,
+  assignedTo,
+}: {
+  ticketId: string;
+  role: Role;
+  tenantId: string;
+  status?: string;
+  priority?: string;
+  assignedTo?: string;
+}) => {
+  let where: any = {
+    id: ticketId,
+  };
+
+  if (role === Role.AGENCY_AGENT) {
+    where.agencyId = tenantId;
+  }
+
+  // ADMIN / INTERNAL_AGENT → no restriction
+
+  if (!status && !priority && !assignedTo) {
+    throw new Error("Nothing to update");
+  }
+  try {
+    const updatedTicket = await prisma.ticket.update({
+      where,
+      data: {
+        ...(status && { status }),
+        ...(priority && { priority }),
+        ...(assignedTo && { assignedTo }),
+      },
+    });
+
+    return updatedTicket;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      throw new ApiError("Ticket not found", 404);
+    }
+    throw new ApiError("Failed to update ticket", 500);
+  }
 };
